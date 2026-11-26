@@ -70,7 +70,7 @@ export function scanRepository(rootDirectory,features) {
       function visitNode(n) {
         const method=sdkCall(n,aliases);
         if (method && n.arguments.length) {
-          const name=resolveString(n.arguments[0],constants) ?? wrapperValue(n,wrappers,constants,aliases);
+          const name=resolveString(n.arguments[0],constants);
           const line=sf.getLineAndCharacterOfPosition(n.getStart(sf)).line+1;
           const location={file,line,method};
           if (name === null) dynamicReferences.push({expression:n.arguments[0].getText(sf),severity:"medium",locations:[location],message:"Feature key could not be resolved statically; manual review is required."});
