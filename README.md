@@ -24,7 +24,7 @@ FlagLens Guard is an open-source developer tool built around self-hosted Flagsmi
 
 ### Repository Intelligence
 - Parse JavaScript and TypeScript with the TypeScript compiler API.
-- Detect literal and constant-variable keys, aliased SDK methods and supported wrapper functions.
+- Detect literal and constant-variable keys, aliased SDK methods.
 - Report unresolved dynamic keys separately for manual review.
 - Identify configured flags not found in scanned source files.
 - Report source paths, line numbers and SDK methods.
