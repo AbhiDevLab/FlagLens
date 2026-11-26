@@ -2,6 +2,15 @@ name: FlagLens Release Guard
 
 on:
   workflow_dispatch:
+    inputs:
+      scan_path:
+        description: Select the clean approval fixture or negative blocking fixture.
+        required: true
+        type: choice
+        options:
+          - examples/clean-app
+          - examples/negative-app
+        default: examples/clean-app
 
 permissions:
   contents: read
@@ -29,7 +38,7 @@ jobs:
           flagsmith-api-key: ${{ secrets.FLAGSMITH_API_KEY }}
           development-environment-key: ${{ secrets.FLAGSMITH_DEVELOPMENT_ENV_KEY }}
           production-environment-key: ${{ secrets.FLAGSMITH_PRODUCTION_ENV_KEY }}
-          scan-path: "examples/clean-app"
+          scan-path: ${{ inputs.scan_path }}
           policy-path: "flaglens.policy.json"
           fail-on-unknown: "true"
 
