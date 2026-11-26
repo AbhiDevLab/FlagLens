@@ -113,10 +113,6 @@ export function buildAuditReport({
   };
 }
 
-function section(title, lines) {
-  return [`## ${title}`, "", ...(lines.length ? lines : ["No findings."]), ""];
-}
-
 export function renderMarkdownReport(report) {
   const risk = report.risk ?? {};
   const scanner = report.scanner ?? {};
