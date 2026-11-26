@@ -23,10 +23,12 @@ FlagLens Guard is an open-source developer tool built around self-hosted Flagsmi
 - Enforce strict release checks in CI.
 
 ### Repository Intelligence
-- Detect literal feature references missing from Flagsmith.
-- Identify configured flags not found in the scanned source files.
-- Report source file paths and line numbers for detected references.
-- Exclude common generated and dependency directories.
+- Parse JavaScript and TypeScript with the TypeScript compiler API.
+- Detect literal and constant-variable keys, aliased SDK methods.
+- Report unresolved dynamic keys separately for manual review.
+- Identify configured flags not found in scanned source files.
+- Report source paths, line numbers and SDK methods.
+- Exclude generated/dependency directories and surface parse warnings.
 - Strict mode for CI validation.
 
 ### Release Governance
