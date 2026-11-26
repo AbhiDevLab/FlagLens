@@ -30,6 +30,6 @@ jobs:
           flagsmith-api-key: ${{ secrets.FLAGSMITH_API_KEY }}
           development-environment-key: ${{ secrets.FLAGSMITH_DEVELOPMENT_ENV_KEY }}
           production-environment-key: ${{ secrets.FLAGSMITH_PRODUCTION_ENV_KEY }}
-          scan-path: "examples/negative-app"
+          scan-path: "examples/clean-app"
           policy-path: "flaglens.policy.json"
           fail-on-unknown: "true"
