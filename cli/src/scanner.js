@@ -47,7 +47,7 @@ function sdkCall(n,aliases) {
   if (ts.isIdentifier(e) && METHODS.has(e.text)) return e.text;
   return null;
 }
-function wrapperValue(call,wrappers,constants,aliases) {
+function wrapperMethod(call,wrappers,aliases) {\n  if (!ts.isCallExpression(call) || !ts.isIdentifier(call.expression)) return null;\n  const fn=wrappers.get(call.expression.text); if (!fn) return null;\n  const params=fn.parameters.filter(p=>ts.isIdentifier(p.name)).map(p=>p.name.text);\n  let found=null;\n  function walk(n) { if (found) return; const m=sdkCall(n,aliases); if (m && n.arguments.length && ts.isIdentifier(n.arguments[0]) && params.includes(n.arguments[0].text)) found=m; ts.forEachChild(n,walk); }\n  walk(fn.body); return found;\n}\nfunction wrapperValue(call,wrappers,constants,aliases) {
   if (!ts.isCallExpression(call) || !ts.isIdentifier(call.expression) || !call.arguments.length) return null;
   const fn=wrappers.get(call.expression.text); if (!fn) return null;
   const params=fn.parameters.filter(p=>ts.isIdentifier(p.name)).map(p=>p.name.text);
