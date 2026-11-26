@@ -6,6 +6,7 @@ on:
     branches:
       - master
       - test/negative-release-guard
+      - feature/audit-artifacts
   pull_request:
     branches:
       - master
