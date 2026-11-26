@@ -541,3 +541,21 @@ tbody tr:hover { background: #161b27; }
     padding: 11px;
   }
 }
+
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+.section-block[id] { scroll-margin-top: 24px; }
+.governance-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 20px;
+}
+.governance-panel > strong { display: block; font: 600 14px "Space Grotesk", sans-serif; margin-bottom: 8px; }
+.governance-panel > p { color: #a6adbc; font-size: 11px; line-height: 1.65; margin-bottom: 14px; }
+.governance-panel pre {
+  overflow-x: auto; padding: 14px 16px; border-radius: 8px;
+  background: #090c13; border: 1px solid var(--border);
+  color: #c8bdff; font: 11px/1.8 ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: pre;
+}
+.governance-panel small { display: block; color: var(--muted); font-size: 10px; line-height: 1.6; margin-top: 10px; }
