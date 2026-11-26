@@ -86,6 +86,13 @@ function App() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [lastUpdated, setLastUpdated] = useState("");
+  const [activeSection, setActiveSection] = useState(() => window.location.hash.slice(1) || "overview");
+
+  useEffect(() => {
+    const syncActiveSection = () => setActiveSection(window.location.hash.slice(1) || "overview");
+    window.addEventListener("hashchange", syncActiveSection);
+    return () => window.removeEventListener("hashchange", syncActiveSection);
+  }, []);
 
   const fetchOverview = useCallback(async (): Promise<Overview> => {
     const response = await fetch(`${API}/flagsmith/overview/1`);
@@ -206,30 +213,30 @@ function App() {
 
         <div className="nav-label">WORKSPACE</div>
         <nav className="nav-links">
-          <a className="nav-link active" href="#overview">
+          <a className={`nav-link ${activeSection === "overview" ? "active" : ""}`} href="#overview">
             <LayoutDashboard size={17} /> Overview
           </a>
-          <a className="nav-link" href="#environments">
+          <a className={`nav-link ${activeSection === "environments" ? "active" : ""}`} href="#environments">
             <GitCompareArrows size={17} /> Environment drift
             <span className="nav-tag">CORE</span>
           </a>
-          <a className="nav-link" href="#features">
+          <a className={`nav-link ${activeSection === "features" ? "active" : ""}`} href="#features">
             <SlidersHorizontal size={17} /> Feature inventory
           </a>
-          <a className="nav-link" href="#audit">
+          <a className={`nav-link ${activeSection === "audit" ? "active" : ""}`} href="#audit">
             <FileSearch size={17} /> Repository audit · CLI
           </a>
-          <a className="nav-link" href="#policies">
+          <a className={`nav-link ${activeSection === "policies" ? "active" : ""}`} href="#policies">
             <ShieldCheck size={17} /> Release policies · CLI
           </a>
         </nav>
 
         <div className="nav-label secondary-label">DEVELOPMENT</div>
         <nav className="nav-links">
-          <a className="nav-link" href="#connection">
+          <a className={`nav-link ${activeSection === "connection" ? "active" : ""}`} href="#connection">
             <Database size={17} /> Integrations
           </a>
-          <a className="nav-link" href="#github-actions">
+          <a className={`nav-link ${activeSection === "github-actions" ? "active" : ""}`} href="#github-actions">
             <Workflow size={17} /> GitHub Actions · CI
           </a>
         </nav>
