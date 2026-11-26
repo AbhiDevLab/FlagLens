@@ -1,4 +1,3 @@
-
 name: FlagLens Release Guard
 
 on:
@@ -33,3 +32,14 @@ jobs:
           scan-path: "examples/clean-app"
           policy-path: "flaglens.policy.json"
           fail-on-unknown: "true"
+
+      - name: Upload FlagLens audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flaglens-audit-${{ github.run_id }}
+          path: |
+            flaglens-report.json
+            flaglens-report.md
+          if-no-files-found: warn
+          retention-days: 14
