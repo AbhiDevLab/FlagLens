@@ -9,6 +9,13 @@ FlagLens helps teams review feature-flag configuration before a release. It brin
 [![Node.js 24+](https://img.shields.io/badge/Node.js-24%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 
 **Repository:** https://github.com/AbhiDevLab/FlagLens  
+
+## Live dashboard
+
+The screenshot below shows the FlagLens dashboard connected to the self-hosted Flagsmith project. Values shown are a captured project snapshot and will vary with your own Flagsmith configuration.
+
+![FlagLens live dashboard](docs/screenshots/dashboard.png)
+
 **Flagsmith:** https://www.flagsmith.com/  
 **Status:** Working project; see the workflow runs for current automated checks.
 

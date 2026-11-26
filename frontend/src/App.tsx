@@ -11,6 +11,8 @@ import {
   Database,
   GitBranch,
   GitCompareArrows,
+  FileSearch,
+  Workflow,
   LayoutDashboard,
   LoaderCircle,
   RefreshCw,
@@ -83,6 +85,13 @@ function App() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [lastUpdated, setLastUpdated] = useState("");
+  const [activeSection, setActiveSection] = useState(() => window.location.hash.slice(1) || "overview");
+
+  useEffect(() => {
+    const syncActiveSection = () => setActiveSection(window.location.hash.slice(1) || "overview");
+    window.addEventListener("hashchange", syncActiveSection);
+    return () => window.removeEventListener("hashchange", syncActiveSection);
+  }, []);
 
   const fetchOverview = useCallback(async (): Promise<Overview> => {
     const response = await fetch(`${API}/flagsmith/overview/1`);
@@ -203,31 +212,31 @@ function App() {
 
         <div className="nav-label">WORKSPACE</div>
         <nav className="nav-links">
-          <a className="nav-link active" href="#overview">
+          <a className={`nav-link ${activeSection === "overview" ? "active" : ""}`} href="#overview">
             <LayoutDashboard size={17} /> Overview
           </a>
-          <a className="nav-link" href="#environments">
+          <a className={`nav-link ${activeSection === "environments" ? "active" : ""}`} href="#environments">
             <GitCompareArrows size={17} /> Environment drift
             <span className="nav-tag">CORE</span>
           </a>
-          <a className="nav-link" href="#features">
+          <a className={`nav-link ${activeSection === "features" ? "active" : ""}`} href="#features">
             <SlidersHorizontal size={17} /> Feature inventory
           </a>
-          <a className="nav-link" href="#roadmap">
-            <Code2 size={17} /> Repository audit · CLI
+          <a className={`nav-link ${activeSection === "audit" ? "active" : ""}`} href="#audit">
+            <FileSearch size={17} /> Repository audit · CLI
           </a>
-          <a className="nav-link" href="#roadmap">
+          <a className={`nav-link ${activeSection === "policies" ? "active" : ""}`} href="#policies">
             <ShieldCheck size={17} /> Release policies · CLI
           </a>
         </nav>
 
         <div className="nav-label secondary-label">DEVELOPMENT</div>
         <nav className="nav-links">
-          <a className="nav-link" href="#connection">
+          <a className={`nav-link ${activeSection === "connection" ? "active" : ""}`} href="#connection">
             <Database size={17} /> Integrations
           </a>
-          <a className="nav-link" href="#roadmap">
-            <GitBranch size={17} /> GitHub Actions · CI
+          <a className={`nav-link ${activeSection === "github-actions" ? "active" : ""}`} href="#github-actions">
+            <Workflow size={17} /> GitHub Actions · CI
           </a>
         </nav>
 
@@ -536,7 +545,23 @@ function App() {
               </div>
             </section>
 
-            <section className="roadmap-banner" id="roadmap">
+
+            <section className="section-block" id="audit">
+              <div className="section-heading"><div><h2>Repository audit</h2><p>Scan JavaScript and TypeScript source for feature-flag references.</p></div><span className="section-count">CLI · AST SCANNER</span></div>
+              <div className="governance-panel"><strong>Run a repository scan</strong><p>Find unknown feature references, dynamic keys requiring review and configured flags not found in source.</p><pre><code>cd cli{"\n"}npm start -- scan ../path/to/your-app{"\n"}npm start -- scan ../path/to/your-app --strict</code></pre><small>Supported extensions: .js, .jsx, .ts, .tsx, .mjs and .cjs.</small></div>
+            </section>
+
+            <section className="section-block" id="policies">
+              <div className="section-heading"><div><h2>Release policies</h2><p>Apply version-controlled governance rules before release.</p></div><span className="section-count">POLICY ENGINE</span></div>
+              <div className="governance-panel"><strong>Evaluate the current policy</strong><p>Rules can block Production-only flags, experimental flags enabled in Production and missing environment states.</p><pre><code>cd cli{"\n"}npm start -- policy check{"\n"}npm start -- report --format both --scan-path ../path/to/your-app</code></pre><small>Edit flaglens.policy.json to align checks with your team's release process.</small></div>
+            </section>
+
+            <section className="section-block" id="connection">
+              <div className="section-heading"><div><h2>Integrations</h2><p>Connect FlagLens to your self-hosted Flagsmith instance.</p></div><span className="section-count">FLAGS MITH API</span></div>
+              <div className="governance-panel"><strong>Backend connection settings</strong><p>Set these values in backend/.env. Keep the Management API token on the server; never expose it in frontend code.</p><pre><code>PORT=4000{"\n"}FLAGSMITH_BASE_URL=http://localhost:8000{"\n"}FLAGSMITH_API_KEY=your-management-token{"\n"}FLAGSMITH_DEVELOPMENT_ENV_KEY=your-development-key{"\n"}FLAGSMITH_PRODUCTION_ENV_KEY=your-production-key</code></pre><small>Expected environment names: Development and Production. Restart the backend after changing credentials.</small></div>
+            </section>
+
+            <section className="roadmap-banner" id="github-actions">
               <div className="roadmap-icon">
                 <ShieldCheck size={23} />
               </div>
