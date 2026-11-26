@@ -1,4 +1,3 @@
-
 name: FlagLens Guard
 description: Audit Flagsmith environments, scan source code and enforce release policies.
 
@@ -85,7 +84,7 @@ runs:
         }
         Write-Host "Required inputs are present and the Flagsmith TCP endpoint is reachable."
 
-    - name: Run FlagLens release governance
+    - name: Generate unified release governance report
       shell: powershell
       env:
         FLAGSMITH_BASE_URL: ${{ inputs.flagsmith-base-url }}
@@ -103,41 +102,28 @@ runs:
         $scanPath = [System.IO.Path]::GetFullPath((Join-Path $env:GITHUB_WORKSPACE $env:FLAGLENS_SCAN_PATH))
         $policyPath = [System.IO.Path]::GetFullPath((Join-Path $env:GITHUB_WORKSPACE $env:FLAGLENS_POLICY_PATH))
 
-        if (!(Test-Path $scanPath)) {
-          throw "Repository scan path does not exist: $scanPath"
-        }
-
-        if (!(Test-Path $policyPath)) {
-          throw "FlagLens policy file was not found: $policyPath"
-        }
-
         $env:FLAGLENS_POLICY_PATH = $policyPath
 
-        Write-Host "Running Flagsmith release audit..."
+        $arguments = @(
+          $entry,
+          "--project", $env:FLAGLENS_PROJECT_ID,
+          "report",
+          "--format", "both",
+          "--scan-path", $scanPath,
+          "--output-dir", $env:GITHUB_WORKSPACE
+        )
 
-        node $entry --project $env:FLAGLENS_PROJECT_ID audit
-        if ($LASTEXITCODE -ne 0) {
-          exit $LASTEXITCODE
+        if ($env:FLAGLENS_FAIL_ON_UNKNOWN -ieq "true") {
+          $arguments += "--strict"
         }
 
-        Write-Host "Scanning repository..."
+        Write-Host "Generating JSON and Markdown release evidence..."
+        node @arguments
+        $reportExitCode = $LASTEXITCODE
 
-        if ($env:FLAGLENS_FAIL_ON_UNKNOWN -eq "true") {
-          node $entry --project $env:FLAGLENS_PROJECT_ID scan $scanPath --strict
-        } else {
-          node $entry --project $env:FLAGLENS_PROJECT_ID scan $scanPath
+        if ($reportExitCode -ne 0) {
+          Write-Host "FlagLens blocked the release. Audit artifacts were generated before enforcement."
+          exit $reportExitCode
         }
 
-        if ($LASTEXITCODE -ne 0) {
-          exit $LASTEXITCODE
-        }
-
-        Write-Host "Checking release policies..."
-
-        node $entry --project $env:FLAGLENS_PROJECT_ID policy check
-
-        if ($LASTEXITCODE -ne 0) {
-          exit $LASTEXITCODE
-        }
-
-        Write-Host "FlagLens release governance completed successfully."
+        Write-Host "FlagLens approved the release. Audit artifacts were generated."
