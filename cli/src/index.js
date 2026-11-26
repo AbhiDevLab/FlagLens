@@ -1,5 +1,6 @@
 import { scanRepository } from "./scanner.js";
 import { analyzeReleaseRisk } from "../../backend/src/riskEngine.js";
+import { evaluatePolicy, validatePolicy } from "./policyEngine.js";
 import "dotenv/config";
 import { Command } from "commander";
 import { config } from "dotenv";
@@ -379,59 +380,37 @@ policyCommand
       throw new Error("Policy file missing. Run: policy init");
     }
 
-    const policy = JSON.parse(readFileSync(POLICY_PATH, "utf8"));
+    let policy;
+    try {
+      policy = JSON.parse(readFileSync(POLICY_PATH, "utf8"));
+    } catch (error) {
+      throw new Error(`Policy file is not valid JSON: ${error.message}`);
+    }
+
+    const policyErrors = validatePolicy(policy);
+    if (policyErrors.length > 0) {
+      throw new Error(`Invalid policy: ${policyErrors.join(" ")}`);
+    }
+
     const context = await getContext(program.opts().project);
     const report = analyze(context);
-    const rules = policy.rules ?? {};
-    const violations = [];
-
-    if (
-      rules.blockProductionOnlyFlags &&
-      report.findings.some((item) => item.code === "PRODUCTION_ONLY")
-    ) {
-      violations.push("Production-only feature flags are not permitted.");
-    }
-
-    if (
-      rules.blockExperimentalFlagsInProduction &&
-      report.findings.some(
-        (item) => item.code === "RISKY_PRODUCTION_FEATURE"
-      )
-    ) {
-      violations.push("Experimental feature enabled in Production.");
-    }
-
-    if (
-      rules.failOnMissingStates &&
-      report.findings.some(
-        (item) => item.code === "MISSING_FEATURE_STATE"
-      )
-    ) {
-      violations.push("Missing environment feature states detected.");
-    }
-
-    const mediumLimit = Number(rules.maxMediumFindings ?? Infinity);
-
-    if (report.severityCounts.medium > mediumLimit) {
-      violations.push(
-        `Medium findings exceed the permitted limit of ${mediumLimit}.`
-      );
-    }
+    const result = evaluatePolicy(policy, report);
 
     printHeader("Release Policy Check");
-    printRow("Risk score", `${report.riskScore}/100`);
-    printRow("Findings", report.totalFindings);
-    printRow("Policy violations", violations.length);
+    printRow("Analysis status", report.status);
+    printRow("Risk score", report.riskScore === null ? "Unavailable" : `${report.riskScore}/100`);
+    printRow("Findings", report.totalFindings ?? report.findings.length);
+    printRow("Policy violations", result.violations.length);
 
-    if (violations.length > 0) {
-      for (const violation of violations) {
-        console.log(`  BLOCK: ${violation}`);
-      }
+    for (const violation of result.violations) {
+      console.log(`  BLOCK: ${violation}`);
+    }
 
-      console.log("\n  RELEASE CHECK FAILED\n");
+    if (!result.passed) {
+      console.log("\\n  RELEASE CHECK FAILED\\n");
       process.exitCode = 1;
     } else {
-      console.log("\n  RELEASE CHECK PASSED\n");
+      console.log("\\n  RELEASE CHECK PASSED\\n");
     }
   }));
 
