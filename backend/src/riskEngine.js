@@ -1,6 +1,6 @@
 
 const RISKY_PRODUCTION_PATTERN =
-  /\b(beta|experimental|debug|internal|preview|test)\b/i;
+  /(?:^|[^a-z0-9])(beta|experimental|debug|internal|preview|test)(?:$|[^a-z0-9])/i;
 
 export function analyzeReleaseRisk(overview) {
   const development = overview.environments.find(
