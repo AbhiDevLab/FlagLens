@@ -2,9 +2,12 @@ name: FlagLens Quality Checks
 
 on:
   push:
-    branches: [master]
+    branches:
+	- master
+      	- test/negative-release-guard
   pull_request:
-    branches: [master]
+    branches: 
+	- master
   workflow_dispatch:
 
 permissions:
