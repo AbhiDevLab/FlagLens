@@ -216,10 +216,10 @@ function App() {
             <SlidersHorizontal size={17} /> Feature inventory
           </a>
           <a className="nav-link" href="#roadmap">
-            <Code2 size={17} /> Repository audit
+            <Code2 size={17} /> Repository audit · CLI
           </a>
           <a className="nav-link" href="#roadmap">
-            <ShieldCheck size={17} /> Release policies
+            <ShieldCheck size={17} /> Release policies · CLI
           </a>
         </nav>
 
@@ -229,7 +229,7 @@ function App() {
             <Database size={17} /> Integrations
           </a>
           <a className="nav-link" href="#roadmap">
-            <Terminal size={17} /> Activity logs
+            <GitBranch size={17} /> GitHub Actions · CI
           </a>
         </nav>
 
@@ -543,15 +543,16 @@ function App() {
                 <ShieldCheck size={23} />
               </div>
               <div>
-                <span className="eyebrow">COMING NEXT</span>
-                <h3>Release governance engine</h3>
+                <span className="eyebrow">CLI &amp; CI CAPABILITIES</span>
+                <h3>Governance workflows</h3>
                 <p>
-                  Policy checks, source-code auditing, pull-request risk
-                  analysis and human-approved releases.
+                  Repository scanning and configurable policy checks are available
+                  through the FlagLens CLI. GitHub Actions integration is
+                  implemented and awaiting end-to-end verification.
                 </p>
               </div>
               <span className="roadmap-status">
-                IN DEVELOPMENT <ArrowUpRight size={14} />
+                CI VERIFICATION PENDING <ArrowUpRight size={14} />
               </span>
             </section>
           </>
