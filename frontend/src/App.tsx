@@ -19,7 +19,6 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
-  Terminal,
   Zap,
 } from "lucide-react";
 
