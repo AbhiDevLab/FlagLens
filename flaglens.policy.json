@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "rules": {
+    "blockProductionOnlyFlags": true,
+    "blockExperimentalFlagsInProduction": true,
+    "failOnMissingStates": true,
+    "maxMediumFindings": 5
+  }
+}

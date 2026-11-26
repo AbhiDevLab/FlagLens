@@ -1,0 +1,35 @@
+
+name: FlagLens Release Guard
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-guard:
+    name: FlagLens Release Governance
+    runs-on: [self-hosted, windows, x64]
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: "24"
+
+      - name: Run FlagLens Guard
+        uses: ./.github/actions/flaglens-guard
+        with:
+          project-id: "1"
+          flagsmith-base-url: "http://localhost:8000"
+          flagsmith-api-key: ${{ secrets.FLAGSMITH_API_KEY }}
+          development-environment-key: ${{ secrets.FLAGSMITH_DEVELOPMENT_ENV_KEY }}
+          production-environment-key: ${{ secrets.FLAGSMITH_PRODUCTION_ENV_KEY }}
+          scan-path: "examples/clean-app"
+          policy-path: "flaglens.policy.json"
+          fail-on-unknown: "true"

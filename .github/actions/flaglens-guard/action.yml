@@ -1,0 +1,116 @@
+
+name: FlagLens Guard
+description: Audit Flagsmith environments, scan source code and enforce release policies.
+
+inputs:
+  project-id:
+    description: Flagsmith project ID
+    required: false
+    default: "1"
+
+  flagsmith-base-url:
+    description: Self-hosted Flagsmith base URL
+    required: false
+    default: "http://localhost:8000"
+
+  flagsmith-api-key:
+    description: Flagsmith organisation Management API token
+    required: true
+
+  development-environment-key:
+    description: Development client-side environment key
+    required: true
+
+  production-environment-key:
+    description: Production client-side environment key
+    required: true
+
+  scan-path:
+    description: Repository directory to scan, relative to workspace
+    required: false
+    default: "."
+
+  policy-path:
+    description: Policy JSON path, relative to workspace
+    required: false
+    default: "flaglens.policy.json"
+
+  fail-on-unknown:
+    description: Fail when source references unknown feature flags
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Install FlagLens CLI dependencies
+      shell: powershell
+      run: |
+        $cliPath = [System.IO.Path]::GetFullPath((Join-Path $env:GITHUB_ACTION_PATH "../../../cli"))
+
+        if (!(Test-Path (Join-Path $cliPath "package-lock.json"))) {
+          throw "FlagLens CLI package-lock.json was not found."
+        }
+
+        npm ci --prefix $cliPath
+
+        if ($LASTEXITCODE -ne 0) {
+          exit $LASTEXITCODE
+        }
+
+    - name: Run FlagLens release governance
+      shell: powershell
+      env:
+        FLAGSMITH_BASE_URL: ${{ inputs.flagsmith-base-url }}
+        FLAGSMITH_API_KEY: ${{ inputs.flagsmith-api-key }}
+        FLAGSMITH_DEVELOPMENT_ENV_KEY: ${{ inputs.development-environment-key }}
+        FLAGSMITH_PRODUCTION_ENV_KEY: ${{ inputs.production-environment-key }}
+        FLAGLENS_PROJECT_ID: ${{ inputs.project-id }}
+        FLAGLENS_POLICY_PATH: ${{ inputs.policy-path }}
+        FLAGLENS_SCAN_PATH: ${{ inputs.scan-path }}
+        FLAGLENS_FAIL_ON_UNKNOWN: ${{ inputs.fail-on-unknown }}
+      run: |
+        $cliPath = [System.IO.Path]::GetFullPath((Join-Path $env:GITHUB_ACTION_PATH "../../../cli"))
+        $entry = Join-Path $cliPath "src/index.js"
+
+        $scanPath = [System.IO.Path]::GetFullPath((Join-Path $env:GITHUB_WORKSPACE $env:FLAGLENS_SCAN_PATH))
+        $policyPath = [System.IO.Path]::GetFullPath((Join-Path $env:GITHUB_WORKSPACE $env:FLAGLENS_POLICY_PATH))
+
+        if (!(Test-Path $scanPath)) {
+          throw "Repository scan path does not exist: $scanPath"
+        }
+
+        if (!(Test-Path $policyPath)) {
+          throw "FlagLens policy file was not found: $policyPath"
+        }
+
+        $env:FLAGLENS_POLICY_PATH = $policyPath
+
+        Write-Host "Running Flagsmith release audit..."
+
+        node $entry --project $env:FLAGLENS_PROJECT_ID audit
+        if ($LASTEXITCODE -ne 0) {
+          exit $LASTEXITCODE
+        }
+
+        Write-Host "Scanning repository..."
+
+        if ($env:FLAGLENS_FAIL_ON_UNKNOWN -eq "true") {
+          node $entry --project $env:FLAGLENS_PROJECT_ID scan $scanPath --strict
+        } else {
+          node $entry --project $env:FLAGLENS_PROJECT_ID scan $scanPath
+        }
+
+        if ($LASTEXITCODE -ne 0) {
+          exit $LASTEXITCODE
+        }
+
+        Write-Host "Checking release policies..."
+
+        node $entry --project $env:FLAGLENS_PROJECT_ID policy check
+
+        if ($LASTEXITCODE -ne 0) {
+          exit $LASTEXITCODE
+        }
+
+        Write-Host "FlagLens release governance completed successfully."

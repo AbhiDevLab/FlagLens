@@ -1,0 +1,24 @@
+# Secrets and environment variables
+.env
+.env.*
+!.env.example
+backend/.env
+
+# Dependencies
+**/node_modules/
+
+# Build output
+**/dist/
+**/build/
+coverage/
+
+# Generated reports
+flaglens-report.md
+flaglens-report.json
+
+# Logs
+*.log
+
+# Operating system
+.DS_Store
+Thumbs.db
