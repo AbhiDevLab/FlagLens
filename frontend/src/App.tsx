@@ -546,12 +546,14 @@ function App() {
                 <h3>Governance workflows</h3>
                 <p>
                   Repository scanning and configurable policy checks are available
-                  through the FlagLens CLI. GitHub Actions integration is
-                  implemented and awaiting end-to-end verification.
+                  through the FlagLens CLI. The GitHub Actions release guard has
+                  been end-to-end verified with both an approved clean fixture and
+                  an intentionally blocked negative fixture. JSON and Markdown
+                  audit artifacts are retained for both outcomes.
                 </p>
               </div>
               <span className="roadmap-status">
-                CI VERIFICATION PENDING <ArrowUpRight size={14} />
+                CI VERIFIED <CheckCircle2 size={14} />
               </span>
             </section>
           </>
