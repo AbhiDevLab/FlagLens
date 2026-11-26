@@ -47,27 +47,6 @@ function sdkCall(n,aliases) {
   if (ts.isIdentifier(e) && METHODS.has(e.text)) return e.text;
   return null;
 }
-function wrapperMethod(call,wrappers,aliases) {
-  if (!ts.isCallExpression(call) || !ts.isIdentifier(call.expression)) return null;
-  const fn=wrappers.get(call.expression.text); if (!fn) return null;
-  const params=fn.parameters.filter(p=>ts.isIdentifier(p.name)).map(p=>p.name.text);
-  let found=null;
-  function walk(n) { if (found) return; const m=sdkCall(n,aliases); if (m && n.arguments.length && ts.isIdentifier(n.arguments[0]) && params.includes(n.arguments[0].text)) found=m; ts.forEachChild(n,walk); }
-  walk(fn.body); return found;
-}
-function wrapperValue(call,wrappers,constants,aliases) {
-  if (!ts.isCallExpression(call) || !ts.isIdentifier(call.expression) || !call.arguments.length) return null;
-  const fn=wrappers.get(call.expression.text); if (!fn) return null;
-  const params=fn.parameters.filter(p=>ts.isIdentifier(p.name)).map(p=>p.name.text);
-  let used=false;
-  function walk(n) {
-    if (used) return;
-    if (sdkCall(n,aliases) && n.arguments.length && ts.isIdentifier(n.arguments[0]) && params.includes(n.arguments[0].text)) used=true;
-    ts.forEachChild(n,walk);
-  }
-  walk(fn.body);
-  return used ? resolveString(call.arguments[0],constants) : null;
-}
 
 export function scanRepository(rootDirectory,features) {
   const root=resolve(rootDirectory);
@@ -87,7 +66,7 @@ export function scanRepository(rootDirectory,features) {
         parseWarnings.push({file,message:sf.parseDiagnostics[0].messageText?.toString() ?? "Source parse error."});
         continue;
       }
-      const {constants,aliases,wrappers}=collect(sf);
+      const {constants,aliases}=collect(sf);
       function visitNode(n) {
         const method=sdkCall(n,aliases);
         if (method && n.arguments.length) {
