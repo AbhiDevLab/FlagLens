@@ -11,6 +11,9 @@ import {
   Database,
   GitBranch,
   GitCompareArrows,
+  FileSearch,
+  PlugZap,
+  Workflow,
   LayoutDashboard,
   LoaderCircle,
   RefreshCw,
@@ -213,10 +216,10 @@ function App() {
           <a className="nav-link" href="#features">
             <SlidersHorizontal size={17} /> Feature inventory
           </a>
-          <a className="nav-link" href="#roadmap">
-            <Code2 size={17} /> Repository audit · CLI
+          <a className="nav-link" href="#audit">
+            <FileSearch size={17} /> Repository audit · CLI
           </a>
-          <a className="nav-link" href="#roadmap">
+          <a className="nav-link" href="#policies">
             <ShieldCheck size={17} /> Release policies · CLI
           </a>
         </nav>
@@ -226,8 +229,8 @@ function App() {
           <a className="nav-link" href="#connection">
             <Database size={17} /> Integrations
           </a>
-          <a className="nav-link" href="#roadmap">
-            <GitBranch size={17} /> GitHub Actions · CI
+          <a className="nav-link" href="#github-actions">
+            <Workflow size={17} /> GitHub Actions · CI
           </a>
         </nav>
 
@@ -392,7 +395,7 @@ function App() {
 
             <RiskPanel risk={data.risk} />
 
-            <section className="section-block" id="environments">
+            <section className="section-block" id="connection">
               <div className="section-heading">
                 <div>
                   <h2>Environment connections</h2>
@@ -536,7 +539,7 @@ function App() {
               </div>
             </section>
 
-            <section className="roadmap-banner" id="roadmap">
+            <section className="roadmap-banner" id="github-actions">
               <div className="roadmap-icon">
                 <ShieldCheck size={23} />
               </div>
