@@ -1,4 +1,4 @@
-import type { RiskReport } from "./components/RiskPanel";
+import RiskPanel, { type RiskReport } from "./components/RiskPanel";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
@@ -391,6 +391,8 @@ function App() {
                 <span className="stat-foot">Flagsmith environments</span>
               </div>
             </section>
+
+            <RiskPanel risk={data.risk} />
 
             <section className="section-block" id="environments">
               <div className="section-heading">
