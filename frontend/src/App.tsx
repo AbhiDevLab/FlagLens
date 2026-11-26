@@ -1,4 +1,4 @@
-import RiskPanel, { type RiskReport } from "./components/RiskPanel";
+import type { RiskReport } from "./components/RiskPanel";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
@@ -86,75 +86,108 @@ function App() {
   const [search, setSearch] = useState("");
   const [lastUpdated, setLastUpdated] = useState("");
 
-  const loadData = useCallback(async (refresh = false) => {
-    if (refresh) setRefreshing(true);
-    else setLoading(true);
+  const fetchOverview = useCallback(async (): Promise<Overview> => {
+    const response = await fetch(`${API}/flagsmith/overview/1`);
 
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      throw new Error(result.error || `Request failed: ${response.status}`);
+    }
+
+    return (await response.json()) as Overview;
+  }, []);
+
+  const refreshData = useCallback(async () => {
+    setRefreshing(true);
     setError("");
 
     try {
-      const response = await fetch(`${API}/flagsmith/overview/1`);
-
-      if (!response.ok) {
-        const result = await response.json().catch(() => ({}));
-        throw new Error(result.error || `Request failed: ${response.status}`);
-      }
-
-      const result: Overview = await response.json();
-
+      const result = await fetchOverview();
       setData(result);
       setLastUpdated(new Date().toLocaleTimeString());
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Unable to connect to FlagLens API."
+        err instanceof Error
+          ? err.message
+          : "Unable to connect to FlagLens API.",
       );
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [fetchOverview]);
 
   useEffect(() => {
-    void loadData();
-  }, [loadData]);
+    let cancelled = false;
+
+    fetchOverview()
+      .then((result) => {
+        if (cancelled) return;
+
+        setData(result);
+        setLastUpdated(new Date().toLocaleTimeString());
+      })
+      .catch((err) => {
+        if (cancelled) return;
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Unable to connect to FlagLens API.",
+        );
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchOverview]);
 
   const development = data?.environments.find(
-    (environment) => environment.name === "Development"
+    (environment) => environment.name === "Development",
   );
 
   const production = data?.environments.find(
-    (environment) => environment.name === "Production"
+    (environment) => environment.name === "Production",
   );
 
-  const activeCount = data?.features.filter(
-    (feature) => getState(development, feature.id) === true
-  ).length ?? 0;
+  const activeCount =
+    data?.features.filter(
+      (feature) => getState(development, feature.id) === true,
+    ).length ?? 0;
 
-  const driftCount = data?.features.filter((feature) => {
-    const devState = getState(development, feature.id);
-    const prodState = getState(production, feature.id);
+  const driftCount =
+    data?.features.filter((feature) => {
+      const devState = getState(development, feature.id);
+      const prodState = getState(production, feature.id);
 
-    return devState !== null && prodState !== null && devState !== prodState;
-  }).length ?? 0;
+      return devState !== null && prodState !== null && devState !== prodState;
+    }).length ?? 0;
 
   const visibleFeatures = useMemo(
     () =>
       (data?.features ?? []).filter((feature) =>
         `${feature.name} ${feature.description ?? ""}`
           .toLowerCase()
-          .includes(search.toLowerCase())
+          .includes(search.toLowerCase()),
       ),
-    [data, search]
+    [data, search],
   );
 
   const connectedCount =
-    data?.environments.filter((environment) => environment.connected).length ?? 0;
+    data?.environments.filter((environment) => environment.connected).length ??
+    0;
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-icon"><ShieldCheck size={22} /></div>
+          <div className="brand-icon">
+            <ShieldCheck size={22} />
+          </div>
           <div>
             <div className="brand-name">FlagLens</div>
             <div className="brand-caption">RELEASE GOVERNANCE</div>
@@ -207,7 +240,9 @@ function App() {
               Self-hosted instance
             </div>
             <span className="connection-url">localhost:8000</span>
-            <span className="connection-description">Flagsmith API connected</span>
+            <span className="connection-description">
+              Flagsmith API connected
+            </span>
           </div>
           <div className="user-profile">
             <div className="user-avatar">AT</div>
@@ -240,13 +275,17 @@ function App() {
 
         <section className="page-heading">
           <div>
-            <div className="eyebrow"><Sparkles size={13} /> DEVELOPER CONTROL CENTRE</div>
+            <div className="eyebrow">
+              <Sparkles size={13} /> DEVELOPER CONTROL CENTRE
+            </div>
             <h1>Project overview</h1>
-            <p>Monitor feature flags, compare environments and govern releases.</p>
+            <p>
+              Monitor feature flags, compare environments and govern releases.
+            </p>
           </div>
           <button
             className="refresh-button"
-            onClick={() => void loadData(true)}
+            onClick={() => void refreshData()}
             disabled={loading || refreshing}
           >
             <RefreshCw size={15} className={refreshing ? "spin" : ""} />
@@ -258,7 +297,7 @@ function App() {
           <div className="error-banner">
             <CircleAlert size={18} />
             <span>{error}</span>
-            <button onClick={() => void loadData(true)}>Retry</button>
+            <button onClick={() => void refreshData()}>Retry</button>
           </div>
         )}
 
@@ -270,7 +309,9 @@ function App() {
         ) : data ? (
           <>
             <section className="project-strip">
-              <div className="project-symbol"><Command size={21} /></div>
+              <div className="project-symbol">
+                <Command size={21} />
+              </div>
               <div className="project-meta">
                 <span>ACTIVE PROJECT</span>
                 <strong>{data.project.name}</strong>
@@ -293,7 +334,9 @@ function App() {
               <div className="stat-card">
                 <div className="stat-top">
                   <span>Total features</span>
-                  <div className="stat-icon purple"><SlidersHorizontal size={18} /></div>
+                  <div className="stat-icon purple">
+                    <SlidersHorizontal size={18} />
+                  </div>
                 </div>
                 <strong className="stat-number">{data.features.length}</strong>
                 <span className="stat-foot">Live project inventory</span>
@@ -302,39 +345,52 @@ function App() {
               <div className="stat-card">
                 <div className="stat-top">
                   <span>Development enabled</span>
-                  <div className="stat-icon green"><Zap size={18} /></div>
+                  <div className="stat-icon green">
+                    <Zap size={18} />
+                  </div>
                 </div>
                 <strong className="stat-number">
-                  {development?.connected ? `${activeCount}/${data.features.length}` : "—"}
+                  {development?.connected
+                    ? `${activeCount}/${data.features.length}`
+                    : "—"}
                 </strong>
                 <span className="stat-foot">
-                  {development?.connected ? "Active feature flags" : "Environment key required"}
+                  {development?.connected
+                    ? "Active feature flags"
+                    : "Environment key required"}
                 </span>
               </div>
 
               <div className="stat-card">
                 <div className="stat-top">
                   <span>Environment drift</span>
-                  <div className="stat-icon amber"><GitBranch size={18} /></div>
+                  <div className="stat-icon amber">
+                    <GitBranch size={18} />
+                  </div>
                 </div>
                 <strong className="stat-number">
                   {production?.connected ? driftCount : "—"}
                 </strong>
                 <span className="stat-foot">
-                  {production?.connected ? "Configuration differences" : "Awaiting Production connection"}
+                  {production?.connected
+                    ? "Configuration differences"
+                    : "Awaiting Production connection"}
                 </span>
               </div>
 
               <div className="stat-card">
                 <div className="stat-top">
                   <span>Connected environments</span>
-                  <div className="stat-icon blue"><Database size={18} /></div>
+                  <div className="stat-icon blue">
+                    <Database size={18} />
+                  </div>
                 </div>
-                <strong className="stat-number">{connectedCount}/{data.environments.length}</strong>
+                <strong className="stat-number">
+                  {connectedCount}/{data.environments.length}
+                </strong>
                 <span className="stat-foot">Flagsmith environments</span>
               </div>
             </section>
-            <RiskPanel risk={data.risk} />
 
             <section className="section-block" id="environments">
               <div className="section-heading">
@@ -342,7 +398,9 @@ function App() {
                   <h2>Environment connections</h2>
                   <p>Live connections to your self-hosted Flagsmith project.</p>
                 </div>
-                <span className="section-count">{data.environments.length} environments</span>
+                <span className="section-count">
+                  {data.environments.length} environments
+                </span>
               </div>
 
               <div className="environment-grid">
@@ -352,7 +410,9 @@ function App() {
                       <div className="environment-icon">
                         <Database size={19} />
                       </div>
-                      <span className={`connection-label ${environment.connected ? "online" : "offline"}`}>
+                      <span
+                        className={`connection-label ${environment.connected ? "online" : "offline"}`}
+                      >
                         <span className="connection-dot" />
                         {environment.connected ? "Connected" : "Key required"}
                       </span>
@@ -365,9 +425,11 @@ function App() {
                           ? `${environment.featureStates.length} feature states retrieved`
                           : "Add this environment's client-side key"}
                       </span>
-                      {environment.connected
-                        ? <CheckCircle2 size={17} className="success-icon" />
-                        : <CircleAlert size={17} className="warning-icon" />}
+                      {environment.connected ? (
+                        <CheckCircle2 size={17} className="success-icon" />
+                      ) : (
+                        <CircleAlert size={17} className="warning-icon" />
+                      )}
                     </div>
                   </div>
                 ))}
@@ -378,7 +440,9 @@ function App() {
               <div className="section-heading feature-heading">
                 <div>
                   <h2>Feature inventory</h2>
-                  <p>Feature definitions and environment-specific enabled states.</p>
+                  <p>
+                    Feature definitions and environment-specific enabled states.
+                  </p>
                 </div>
                 <div className="table-search">
                   <Search size={15} />
@@ -414,46 +478,79 @@ function App() {
                         <tr key={feature.id}>
                           <td>
                             <div className="feature-name">
-                              <div className="feature-symbol"><Code2 size={16} /></div>
+                              <div className="feature-symbol">
+                                <Code2 size={16} />
+                              </div>
                               <div>
                                 <strong>{feature.name}</strong>
-                                <span>{feature.description || "No description provided"}</span>
+                                <span>
+                                  {feature.description ||
+                                    "No description provided"}
+                                </span>
                               </div>
                             </div>
                           </td>
-                          <td><StateBadge enabled={devState} /></td>
-                          <td><StateBadge enabled={prodState} /></td>
-                          <td><span className="type-label">{feature.type || "STANDARD"}</span></td>
                           <td>
-                            {hasDrift
-                              ? <span className="drift-label"><CircleAlert size={13} /> Drift detected</span>
-                              : devState !== null && prodState !== null
-                                ? <span className="matched-label"><CheckCircle2 size={13} /> Matched</span>
-                                : <span className="pending-label">Pending</span>}
+                            <StateBadge enabled={devState} />
+                          </td>
+                          <td>
+                            <StateBadge enabled={prodState} />
+                          </td>
+                          <td>
+                            <span className="type-label">
+                              {feature.type || "STANDARD"}
+                            </span>
+                          </td>
+                          <td>
+                            {hasDrift ? (
+                              <span className="drift-label">
+                                <CircleAlert size={13} /> Drift detected
+                              </span>
+                            ) : devState !== null && prodState !== null ? (
+                              <span className="matched-label">
+                                <CheckCircle2 size={13} /> Matched
+                              </span>
+                            ) : (
+                              <span className="pending-label">Pending</span>
+                            )}
                           </td>
                         </tr>
                       );
                     })}
                     {visibleFeatures.length === 0 && (
-                      <tr><td colSpan={5} className="empty-state">No matching features found.</td></tr>
+                      <tr>
+                        <td colSpan={5} className="empty-state">
+                          No matching features found.
+                        </td>
+                      </tr>
                     )}
                   </tbody>
                 </table>
               </div>
               <div className="table-footer">
-                <span>Showing {visibleFeatures.length} of {data.features.length} features</span>
+                <span>
+                  Showing {visibleFeatures.length} of {data.features.length}{" "}
+                  features
+                </span>
                 <span>Source: Flagsmith Management API</span>
               </div>
             </section>
 
             <section className="roadmap-banner" id="roadmap">
-              <div className="roadmap-icon"><ShieldCheck size={23} /></div>
+              <div className="roadmap-icon">
+                <ShieldCheck size={23} />
+              </div>
               <div>
                 <span className="eyebrow">COMING NEXT</span>
                 <h3>Release governance engine</h3>
-                <p>Policy checks, source-code auditing, pull-request risk analysis and human-approved releases.</p>
+                <p>
+                  Policy checks, source-code auditing, pull-request risk
+                  analysis and human-approved releases.
+                </p>
               </div>
-              <span className="roadmap-status">IN DEVELOPMENT <ArrowUpRight size={14} /></span>
+              <span className="roadmap-status">
+                IN DEVELOPMENT <ArrowUpRight size={14} />
+              </span>
             </section>
           </>
         ) : (
@@ -461,8 +558,13 @@ function App() {
         )}
 
         <footer className="footer">
-          <span><ShieldCheck size={14} /> FlagLens · Self-hosted Flagsmith integration</span>
-          <span><span className="connection-dot" /> Local development</span>
+          <span>
+            <ShieldCheck size={14} /> FlagLens · Self-hosted Flagsmith
+            integration
+          </span>
+          <span>
+            <span className="connection-dot" /> Local development
+          </span>
         </footer>
       </main>
     </div>
