@@ -1,4 +1,5 @@
 import { scanRepository } from "./scanner.js";
+import { analyzeReleaseRisk } from "../../backend/src/riskEngine.js";
 import "dotenv/config";
 import { Command } from "commander";
 import { config } from "dotenv";
@@ -155,115 +156,7 @@ function getState(environment, featureId) {
 }
 
 function analyze(context) {
-  const development = context.environments.find(
-    (environment) => environment.name === "Development"
-  );
-
-  const production = context.environments.find(
-    (environment) => environment.name === "Production"
-  );
-
-  if (!development?.connected || !production?.connected) {
-    throw new Error(
-      "Both Development and Production environment keys must be configured."
-    );
-  }
-
-  const findings = [];
-
-  for (const feature of context.features) {
-    const devState = getState(development, feature.id);
-    const prodState = getState(production, feature.id);
-
-    if (devState === null || prodState === null) {
-      findings.push({
-        code: "MISSING_FEATURE_STATE",
-        feature: feature.name,
-        severity: "medium",
-        points: 10,
-        title: "Missing environment configuration",
-        message: "A global feature state is missing from an environment.",
-        recommendation:
-          "Inspect the feature configuration in Flagsmith.",
-      });
-      continue;
-    }
-
-    if (devState && !prodState) {
-      findings.push({
-        code: "NOT_PROMOTED",
-        feature: feature.name,
-        severity: "medium",
-        points: 15,
-        title: "Feature not promoted",
-        message:
-          `${feature.name} is enabled in Development but disabled in Production.`,
-        recommendation:
-          "Review whether this feature is ready for production promotion.",
-      });
-    }
-
-    if (!devState && prodState) {
-      findings.push({
-        code: "PRODUCTION_ONLY",
-        feature: feature.name,
-        severity: "high",
-        points: 35,
-        title: "Unexpected production exposure",
-        message:
-          `${feature.name} is enabled in Production but disabled in Development.`,
-        recommendation:
-          "Require release review and verify the intended production state.",
-      });
-    }
-
-    if (
-      prodState &&
-      /\b(beta|experimental|debug|internal|preview|test)\b/i.test(
-        feature.name
-      )
-    ) {
-      findings.push({
-        code: "RISKY_PRODUCTION_FEATURE",
-        feature: feature.name,
-        severity: "high",
-        points: 25,
-        title: "Experimental feature enabled in production",
-        message:
-          `${feature.name} appears experimental but is enabled in Production.`,
-        recommendation:
-          "Verify that this feature is approved for production exposure.",
-      });
-    }
-  }
-
-  const riskScore = Math.min(
-    100,
-    findings.reduce((total, finding) => total + finding.points, 0)
-  );
-
-  const riskLevel =
-    riskScore >= 75
-      ? "Critical"
-      : riskScore >= 50
-        ? "High"
-        : riskScore >= 20
-          ? "Moderate"
-          : "Low";
-
-  return {
-    status: "complete",
-    riskScore,
-    riskLevel,
-    totalFindings: findings.length,
-    severityCounts: {
-      high: findings.filter((item) => item.severity === "high").length,
-      medium: findings.filter((item) => item.severity === "medium").length,
-      low: findings.filter((item) => item.severity === "low").length,
-    },
-    findings,
-    generatedAt: new Date().toISOString(),
-  };
+  return analyzeReleaseRisk(context);
 }
 
 function enabledLabel(value) {
