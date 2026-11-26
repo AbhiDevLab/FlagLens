@@ -58,6 +58,33 @@ runs:
           exit $LASTEXITCODE
         }
 
+    - name: Validate release guard prerequisites
+      shell: powershell
+      env:
+        FLAGSMITH_BASE_URL: ${{ inputs.flagsmith-base-url }}
+        FLAGSMITH_API_KEY: ${{ inputs.flagsmith-api-key }}
+        FLAGSMITH_DEVELOPMENT_ENV_KEY: ${{ inputs.development-environment-key }}
+        FLAGSMITH_PRODUCTION_ENV_KEY: ${{ inputs.production-environment-key }}
+      run: |
+        $required = @(
+          @{ Name = "FLAGSMITH_API_KEY"; Value = $env:FLAGSMITH_API_KEY },
+          @{ Name = "FLAGSMITH_DEVELOPMENT_ENV_KEY"; Value = $env:FLAGSMITH_DEVELOPMENT_ENV_KEY },
+          @{ Name = "FLAGSMITH_PRODUCTION_ENV_KEY"; Value = $env:FLAGSMITH_PRODUCTION_ENV_KEY }
+        )
+        foreach ($item in $required) {
+          if ([string]::IsNullOrWhiteSpace($item.Value)) {
+            throw "Required GitHub secret/input is missing: $($item.Name)"
+          }
+        }
+
+        $uri = [System.Uri]$env:FLAGSMITH_BASE_URL
+        $port = if ($uri.IsDefaultPort) { 80 } else { $uri.Port }
+        $connection = Test-NetConnection -ComputerName $uri.Host -Port $port -WarningAction SilentlyContinue
+        if (!$connection.TcpTestSucceeded) {
+          throw "Cannot reach Flagsmith at $($uri.Host):$port from this runner. Confirm the instance is running and reachable."
+        }
+        Write-Host "Required inputs are present and the Flagsmith TCP endpoint is reachable."
+
     - name: Run FlagLens release governance
       shell: powershell
       env:
