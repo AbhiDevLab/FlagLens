@@ -1,4 +1,9 @@
 import { scanRepository } from "./scanner.js";
+import {
+  buildAuditReport,
+  renderJsonReport,
+  renderMarkdownReport,
+} from "./auditReport.js";
 import { analyzeReleaseRisk } from "../../backend/src/riskEngine.js";
 import { evaluatePolicy, validatePolicy } from "./policyEngine.js";
 import "dotenv/config";
@@ -6,6 +11,7 @@ import { Command } from "commander";
 import { config } from "dotenv";
 import {
   existsSync,
+  mkdirSync,
   readFileSync,
   writeFileSync,
 } from "node:fs";
@@ -165,6 +171,29 @@ function enabledLabel(value) {
   return value ? "Enabled" : "Disabled";
 }
 
+function loadPolicy() {
+  if (!existsSync(POLICY_PATH)) {
+    return {
+      policy: null,
+      errors: ["Policy file missing. Run: policy init"],
+    };
+  }
+
+  let policy;
+
+  try {
+    policy = JSON.parse(readFileSync(POLICY_PATH, "utf8"));
+  } catch (error) {
+    return {
+      policy: null,
+      errors: [`Policy file is not valid JSON: ${error.message}`],
+    };
+  }
+
+  const errors = validatePolicy(policy);
+  return { policy, errors };
+}
+
 function safe(action) {
   return async (...args) => {
     try {
@@ -278,67 +307,85 @@ program
 
 program
   .command("report")
-  .description("Generate a JSON or Markdown audit report")
-  .option("-f, --format <format>", "json or markdown", "markdown")
+  .description("Generate a unified JSON or Markdown release-governance report")
+  .option("-f, --format <format>", "json, markdown or both", "markdown")
+  .option("--scan-path <directory>", "Repository directory to include in the report")
+  .option("--strict", "Block the release when unknown feature references are found")
+  .option("--output-dir <directory>", "Directory for generated reports", ROOT_DIR)
   .action(safe(async (options) => {
     const format = options.format.toLowerCase();
 
-    if (!["json", "markdown"].includes(format)) {
-      throw new Error("Format must be json or markdown.");
+    if (!["json", "markdown", "both"].includes(format)) {
+      throw new Error("Format must be json, markdown or both.");
     }
 
     const context = await getContext(program.opts().project);
     const risk = analyze(context);
+    const { policy, errors: policyErrors } = loadPolicy();
 
-    const report = {
-      project: context.project.name,
-      projectId: context.project.id,
-      generatedAt: new Date().toISOString(),
-      environments: context.environments.map((environment) => ({
-        name: environment.name,
-        connected: environment.connected,
-      })),
+    const policyResult = policyErrors.length > 0
+      ? { passed: false, violations: policyErrors }
+      : evaluatePolicy(policy, risk);
+
+    let scanner = null;
+    let scannerError = null;
+
+    if (options.scanPath) {
+      try {
+        scanner = scanRepository(options.scanPath, context.features);
+      } catch (error) {
+        scannerError = error.message;
+      }
+    }
+
+    const report = buildAuditReport({
+      project: context.project,
+      environments: context.environments,
       risk,
-    };
+      scanner,
+      scannerError,
+      scannerStrict: options.strict,
+      policyDefinition: policy,
+      policyResult,
+      policyErrors,
+    });
 
-    const extension = format === "json" ? "json" : "md";
-    const outputPath = resolve(
-      ROOT_DIR,
-      `flaglens-report.${extension}`
-    );
+    const outputDirectory = resolve(options.outputDir);
+    mkdirSync(outputDirectory, { recursive: true });
 
-    const content = format === "json"
-      ? JSON.stringify(report, null, 2)
-      : [
-          `# FlagLens Release Audit`,
-          ``,
-          `Project: ${report.project}`,
-          `Project ID: ${report.projectId}`,
-          `Generated: ${report.generatedAt}`,
-          ``,
-          `## Risk summary`,
-          ``,
-          `- Score: ${risk.riskScore}/100`,
-          `- Level: ${risk.riskLevel}`,
-          `- Findings: ${risk.totalFindings}`,
-          ``,
-          `## Findings`,
-          ``,
-          ...risk.findings.flatMap((finding) => [
-            `### ${finding.title}: ${finding.feature}`,
-            ``,
-            `- Severity: ${finding.severity}`,
-            `- Points: +${finding.points}`,
-            `- Explanation: ${finding.message}`,
-            `- Recommendation: ${finding.recommendation}`,
-            ``,
-          ]),
-          `> This is a configurable heuristic, not a prediction of deployment failure.`,
-        ].join("\n");
+    const outputs = format === "both"
+      ? ["json", "markdown"]
+      : [format];
 
-    writeFileSync(outputPath, content, "utf8");
+    for (const outputFormat of outputs) {
+      const extension = outputFormat === "json" ? "json" : "md";
+      const outputPath = resolve(
+        outputDirectory,
+        `flaglens-report.${extension}`
+      );
+      const content = outputFormat === "json"
+        ? renderJsonReport(report)
+        : renderMarkdownReport(report);
 
-    console.log(`\n  Report generated: ${outputPath}\n`);
+      writeFileSync(outputPath, content, "utf8");
+      console.log(`  Report generated: ${outputPath}`);
+    }
+
+    printHeader("Release Governance Decision");
+    printRow("Project", report.project);
+    printRow("Risk", `${risk.riskScore ?? "Unavailable"} / 100`);
+    printRow("Scanner", report.scanner.status);
+    printRow("Policy violations", report.policy.violations.length);
+    printRow("Release status", report.status.toUpperCase());
+
+    if (report.status === "blocked") {
+      console.log("\n  RELEASE BLOCKED — audit evidence was generated.\n");
+      process.exitCode = 1;
+    } else if (report.status === "incomplete") {
+      console.log("\n  REPORT INCOMPLETE — repository scanning was not requested.\n");
+    } else {
+      console.log("\n  RELEASE APPROVED BY CONFIGURED CHECKS.\n");
+    }
   }));
 
 const policyCommand = program
@@ -414,7 +461,6 @@ policyCommand
     }
   }));
 
-
 program
   .command("scan")
   .description("Scan a repository for Flagsmith feature references")
@@ -486,6 +532,5 @@ program
       console.log("  SCAN COMPLETED.\n");
     }
   }));
-
 
 await program.parseAsync(process.argv);
