@@ -26,7 +26,7 @@ jobs:
         uses: ./.github/actions/flaglens-guard
         with:
           project-id: "1"
-          flagsmith-base-url: "http://localhost:8000"
+          flagsmith-base-url: "http://127.0.0.1:8000"
           flagsmith-api-key: ${{ secrets.FLAGSMITH_API_KEY }}
           development-environment-key: ${{ secrets.FLAGSMITH_DEVELOPMENT_ENV_KEY }}
           production-environment-key: ${{ secrets.FLAGSMITH_PRODUCTION_ENV_KEY }}
