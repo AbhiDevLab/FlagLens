@@ -104,6 +104,10 @@ runs:
 
         $env:FLAGLENS_POLICY_PATH = $policyPath
 
+        if ($env:FLAGLENS_FAIL_ON_UNKNOWN -notin @("true", "false")) {
+          throw "The fail-on-unknown input must be true or false."
+        }
+
         $arguments = @(
           $entry,
           "--project", $env:FLAGLENS_PROJECT_ID,
