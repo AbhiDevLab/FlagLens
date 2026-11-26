@@ -12,7 +12,6 @@ import {
   GitBranch,
   GitCompareArrows,
   FileSearch,
-  PlugZap,
   Workflow,
   LayoutDashboard,
   LoaderCircle,
