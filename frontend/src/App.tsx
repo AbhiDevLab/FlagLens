@@ -2,7 +2,6 @@ import RiskPanel, { type RiskReport } from "./components/RiskPanel";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
-  ArrowUpRight,
   Bell,
   CheckCircle2,
   ChevronDown,
