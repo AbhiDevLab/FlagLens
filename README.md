@@ -32,7 +32,7 @@ Feature flags make it easier to release features gradually, but configuration dr
 
 | Capability | What it helps you do |
 |---|---|
-| 📊 **Live dashboard** | View projects, environments, feature flags, configuration drift and risk findings |
+| 📊 **Interactive release dashboard** | Explore live project and environment data, filter flags by drift and review state, inspect individual flags, and export a JSON configuration snapshot |
 | 🔍 **AST repository scanner** | Find unknown feature references, unresolved dynamic references and configured flags not found in scanned source |
 | ⚖️ **Release policy engine** | Evaluate configurable rules for risky Production states and missing environment states |
 | 🧾 **Audit reports** | Generate JSON and Markdown reports with findings, decisions and remediation guidance |
@@ -51,6 +51,18 @@ Watch the recorded FlagLens walkthrough:
 The screenshot below is a captured view of the FlagLens dashboard connected to a self-hosted Flagsmith project. Live values will depend on the connected Flagsmith instance.
 
 ![FlagLens dashboard preview](docs/screenshots/dashboard.png)
+
+## 🧭 Interactive Release Review
+
+The dashboard's **Feature inventory** is an interactive review workspace:
+
+- Filter the inventory to all flags, environment drift, Production-only exposure, Development-only flags, missing environment data, or matching global states.
+- Search feature keys, descriptions and types.
+- Select any feature to inspect its Development and Production global states, view its description and copy its feature key.
+- Export a timestamped JSON configuration snapshot for review or record keeping.
+- Filter Release Risk Intelligence findings by severity.
+
+The JSON export is a snapshot of the configuration returned by the Flagsmith API. It is **not** a repository scan, policy evaluation or release approval. Identity- and segment-specific overrides are outside this global-state comparison. FlagLens remains read-only toward Flagsmith.
 
 ## 🧭 How It Works
 
