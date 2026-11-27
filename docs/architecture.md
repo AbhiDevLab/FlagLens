@@ -48,7 +48,7 @@ flowchart TB
 
 | Component | Responsibility |
 |---|---|
-| Dashboard | Displays project overview, environment connections, global feature-state drift, inventory and risk findings |
+| Dashboard | Displays project overview, environment connections, global feature-state drift and risk findings; provides searchable status filters, per-feature inspection and a JSON configuration snapshot export |
 | Express backend | Keeps the Flagsmith Management API token server-side and exposes dashboard data endpoints |
 | Flagsmith | Source of truth for project, feature definitions, environments and feature states |
 | CLI | Retrieves Flagsmith context and runs audits, scans, policy checks and report generation |
@@ -58,6 +58,16 @@ flowchart TB
 | Report builder | Combines project context, risk, scanner and policy evidence into JSON and Markdown |
 | Composite action | Installs CLI dependencies, validates credentials/connectivity, runs report generation and preserves the exit code |
 | GitHub Actions | Runs repository quality checks and the manually triggered release guard |
+
+## Interactive review behaviour
+
+The dashboard derives review states from the global feature state for each flag in Development and Production. It distinguishes:
+- Production-only exposure (disabled in Development, enabled in Production).
+- Development-only state (enabled in Development, disabled in Production).
+- Missing data when either environment is disconnected or a global state is unavailable.
+- In-sync states when both retrieved global values match.
+
+Users can filter and search the feature inventory, inspect a selected feature, and export a timestamped JSON configuration snapshot. The export is informational evidence only; it is not the CLI repository scan, policy evaluation or a release approval. The dashboard does not write changes to Flagsmith.
 
 ## Data and decision flow
 
