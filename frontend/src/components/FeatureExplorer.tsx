@@ -37,11 +37,13 @@ type Environment = {
 
 type FilterKey = "all" | "drift" | "production" | "development" | "missing" | "matched";
 
+type ReviewStatus = "production" | "development" | "missing" | "matched";
+
 type ReviewRow = {
   feature: Feature;
   development: boolean | null;
   production: boolean | null;
-  status: Exclude<FilterKey, "all">;
+  status: ReviewStatus;
 };
 
 type Props = {
@@ -57,8 +59,8 @@ function getGlobalState(environment: Environment | undefined, featureId: number)
   const state = environment.featureStates.find(
     (item) =>
       item.feature === featureId &&
-      item.identity == null &&
-      item.feature_segment == null,
+      (item.identity === null || item.identity === undefined) &&
+      (item.feature_segment === null || item.feature_segment === undefined),
   );
   return state ? state.enabled : null;
 }
@@ -112,7 +114,6 @@ export default function FeatureExplorer({
         if (dev === null || prod === null) status = "missing";
         else if (!dev && prod) status = "production";
         else if (dev && !prod) status = "development";
-        else if (dev !== prod) status = "drift";
         return { feature, development: dev, production: prod, status };
       });
   }, [features, development, production]);
@@ -131,9 +132,9 @@ export default function FeatureExplorer({
     return rows.filter((row) => {
       const matchesFilter =
         filter === "all" ||
-        filter === "drift"
-          ? filter === "all" || row.status === "production" || row.status === "development"
-          : row.status === filter;
+        (filter === "drift"
+          ? row.status === "production" || row.status === "development"
+          : row.status === filter);
       const matchesSearch =
         !needle ||
         `${row.feature.name} ${row.feature.description ?? ""} ${row.feature.type ?? ""}`
@@ -181,7 +182,7 @@ export default function FeatureExplorer({
     document.body.appendChild(link);
     link.click();
     link.remove();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const copyFeatureKey = async () => {
