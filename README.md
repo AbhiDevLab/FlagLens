@@ -16,7 +16,7 @@ A release-governance toolkit that helps teams detect feature-flag drift, scan ap
 [![React](https://img.shields.io/badge/Frontend-React-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/Scanner-TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-[🎬 Watch the project demonstration](https://drive.google.com/drive/folders/19VFOMrZedl9KKA92fgEc3p0RfpYJIaN0?usp=sharing) · [📦 GitHub Repository](https://github.com/AbhiDevLab/FlagLens) · [🏗️ Architecture](docs/architecture.md)
+[🎬 Watch the FlagLens demo on Loom](https://www.loom.com/share/434de16b05b7431c8052a709ed3d2e54) · [📦 GitHub Repository](https://github.com/AbhiDevLab/FlagLens) · [🏗️ Architecture](docs/architecture.md)
 
 </div>
 
@@ -42,9 +42,9 @@ Feature flags make it easier to release features gradually, but configuration dr
 
 Watch the recorded FlagLens walkthrough:
 
-**[▶ Open the FlagLens demonstration video on Google Drive](https://drive.google.com/drive/folders/19VFOMrZedl9KKA92fgEc3p0RfpYJIaN0?usp=sharing)**
+**[▶ Watch the FlagLens demonstration on Loom](https://www.loom.com/share/434de16b05b7431c8052a709ed3d2e54)**
 
-> If the video does not open, check that the Drive folder and video are shared with **Anyone with the link — Viewer** access.
+> The demonstration is shared through Loom. Reviewers can watch it using the link without signing in.
 
 ## 🖥️ Dashboard Preview
 
