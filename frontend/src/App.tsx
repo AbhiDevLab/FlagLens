@@ -61,8 +61,12 @@ function getState(environment: Environment | undefined, featureId: number) {
   if (!environment?.connected) return null;
 
   return (
-    environment.featureStates.find((state) => state.feature === featureId)
-      ?.enabled ?? null
+    environment.featureStates.find(
+      (state) =>
+        state.feature === featureId &&
+        (state.identity === null || state.identity === undefined) &&
+        (state.feature_segment === null || state.feature_segment === undefined),
+    )?.enabled ?? null
   );
 }
 
