@@ -1,4 +1,5 @@
 
+import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -36,6 +37,11 @@ export default function RiskPanel({
 }: {
   risk: RiskReport;
 }) {
+  const [severityFilter, setSeverityFilter] = useState<"all" | "high" | "medium" | "low">("all");
+  const filteredFindings = useMemo(
+    () => severityFilter === "all" ? risk.findings : risk.findings.filter((finding) => finding.severity === severityFilter),
+    [risk.findings, severityFilter],
+  );
   if (risk.status !== "complete" || risk.riskScore === null) {
     return (
       <section className="section-block risk-panel">
@@ -136,9 +142,21 @@ export default function RiskPanel({
       <div className="findings-header">
         <div>
           <h3>Detected findings</h3>
-          <p>Configuration differences requiring attention.</p>
+          <p>Filter configuration differences by review severity.</p>
         </div>
-        <span>{risk.totalFindings} findings</span>
+        <span>{filteredFindings.length} of {risk.totalFindings} findings</span>
+      </div>
+
+      <div className="finding-filter-bar" role="group" aria-label="Filter risk findings">
+        {(["all", "high", "medium", "low"] as const).map((severity) => {
+          const count = severity === "all" ? risk.findings.length : risk.findings.filter((finding) => finding.severity === severity).length;
+          const label = severity === "all" ? "All findings" : severity.charAt(0).toUpperCase() + severity.slice(1);
+          return (
+            <button key={severity} className={severityFilter === severity ? "finding-filter active" : "finding-filter"} onClick={() => setSeverityFilter(severity)} aria-pressed={severityFilter === severity}>
+              {label}<span>{count}</span>
+            </button>
+          );
+        })}
       </div>
 
       {risk.findings.length === 0 ? (
@@ -149,9 +167,15 @@ export default function RiskPanel({
             No issues were identified by the currently configured rules.
           </span>
         </div>
+      ) : filteredFindings.length === 0 ? (
+        <div className="risk-empty compact-empty">
+          <CheckCircle2 size={20} />
+          <strong>No {severityFilter} findings</strong>
+          <span>Choose another severity to inspect the remaining findings.</span>
+        </div>
       ) : (
         <div className="risk-findings">
-          {risk.findings.map((finding, index) => (
+          {filteredFindings.map((finding, index) => (
             <article className="finding-card" key={`${finding.code}-${finding.feature}-${index}`}>
               <div className={`finding-icon severity-${finding.severity}`}>
                 <AlertTriangle size={17} />
