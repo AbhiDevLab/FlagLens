@@ -1,12 +1,12 @@
 import RiskPanel, { type RiskReport } from "./components/RiskPanel";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import FeatureExplorer from "./components/FeatureExplorer";
+import { useCallback, useEffect, useState } from "react";
 import {
   Activity,
   Bell,
   CheckCircle2,
   ChevronDown,
   CircleAlert,
-  Code2,
   Command,
   Database,
   GitBranch,
@@ -16,7 +16,6 @@ import {
   LayoutDashboard,
   LoaderCircle,
   RefreshCw,
-  Search,
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
@@ -35,6 +34,8 @@ type Feature = {
 type FeatureState = {
   feature: number;
   enabled: boolean;
+  identity?: unknown;
+  feature_segment?: unknown;
 };
 
 type Environment = {
@@ -83,7 +84,6 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
   const [lastUpdated, setLastUpdated] = useState("");
   const [activeSection, setActiveSection] = useState(() => window.location.hash.slice(1) || "overview");
 
@@ -173,16 +173,6 @@ function App() {
 
       return devState !== null && prodState !== null && devState !== prodState;
     }).length ?? 0;
-
-  const visibleFeatures = useMemo(
-    () =>
-      (data?.features ?? []).filter((feature) =>
-        `${feature.name} ${feature.description ?? ""}`
-          .toLowerCase()
-          .includes(search.toLowerCase()),
-      ),
-    [data, search],
-  );
 
   const connectedCount =
     data?.environments.filter((environment) => environment.connected).length ??
@@ -445,105 +435,13 @@ function App() {
               </div>
             </section>
 
-            <section className="section-block" id="features">
-              <div className="section-heading feature-heading">
-                <div>
-                  <h2>Feature inventory</h2>
-                  <p>
-                    Feature definitions and environment-specific enabled states.
-                  </p>
-                </div>
-                <div className="table-search">
-                  <Search size={15} />
-                  <input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search features..."
-                  />
-                </div>
-              </div>
-
-              <div className="table-wrapper">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>FEATURE</th>
-                      <th>DEVELOPMENT</th>
-                      <th>PRODUCTION</th>
-                      <th>TYPE</th>
-                      <th>STATUS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleFeatures.map((feature) => {
-                      const devState = getState(development, feature.id);
-                      const prodState = getState(production, feature.id);
-                      const hasDrift =
-                        devState !== null &&
-                        prodState !== null &&
-                        devState !== prodState;
-
-                      return (
-                        <tr key={feature.id}>
-                          <td>
-                            <div className="feature-name">
-                              <div className="feature-symbol">
-                                <Code2 size={16} />
-                              </div>
-                              <div>
-                                <strong>{feature.name}</strong>
-                                <span>
-                                  {feature.description ||
-                                    "No description provided"}
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <StateBadge enabled={devState} />
-                          </td>
-                          <td>
-                            <StateBadge enabled={prodState} />
-                          </td>
-                          <td>
-                            <span className="type-label">
-                              {feature.type || "STANDARD"}
-                            </span>
-                          </td>
-                          <td>
-                            {hasDrift ? (
-                              <span className="drift-label">
-                                <CircleAlert size={13} /> Drift detected
-                              </span>
-                            ) : devState !== null && prodState !== null ? (
-                              <span className="matched-label">
-                                <CheckCircle2 size={13} /> Matched
-                              </span>
-                            ) : (
-                              <span className="pending-label">Pending</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {visibleFeatures.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="empty-state">
-                          No matching features found.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              <div className="table-footer">
-                <span>
-                  Showing {visibleFeatures.length} of {data.features.length}{" "}
-                  features
-                </span>
-                <span>Source: Flagsmith Management API</span>
-              </div>
-            </section>
+            <FeatureExplorer
+              features={data.features}
+              environments={data.environments}
+              projectName={data.project.name}
+              projectId={data.project.id}
+              generatedAt={data.generatedAt}
+            />
 
 
             <section className="section-block" id="audit">
