@@ -1,31 +1,110 @@
-# FlagLens
+<!-- FlagLens project README -->
 
-### Release governance for self-hosted Flagsmith
+<div align="center">
 
-FlagLens helps teams review feature-flag configuration before a release. It brings together a live dashboard, a JavaScript/TypeScript repository scanner, configurable release policies, and a GitHub Actions guard that can block a release while preserving audit evidence.
+# 🔎 FlagLens
+
+### Release Governance for Self-Hosted Flagsmith
+
+**Inspect. Analyze. Enforce. Audit.**
+
+A release-governance toolkit that helps teams detect feature-flag drift, scan application code, evaluate release policies, and prevent risky releases through GitHub Actions.
 
 [![FlagLens Quality Checks](https://github.com/AbhiDevLab/FlagLens/actions/workflows/quality.yml/badge.svg?branch=master)](https://github.com/AbhiDevLab/FlagLens/actions/workflows/quality.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node.js 24+](https://img.shields.io/badge/Node.js-24%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24%2B-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/Frontend-React-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/Scanner-TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-**Repository:** https://github.com/AbhiDevLab/FlagLens  
+[🎬 Watch the project demonstration](https://drive.google.com/drive/folders/19VFOMrZedl9KKA92fgEc3p0RfpYJIaN0?usp=sharing) · [📦 GitHub Repository](https://github.com/AbhiDevLab/FlagLens) · [🏗️ Architecture](docs/architecture.md)
 
-## Live dashboard
-
-The screenshot below shows the FlagLens dashboard connected to the self-hosted Flagsmith project. Values shown are a captured project snapshot and will vary with your own Flagsmith configuration.
-
-![FlagLens live dashboard](docs/screenshots/dashboard.png)
-
-**Flagsmith:** https://www.flagsmith.com/  
-**Status:** Working project; see the workflow runs for current automated checks.
+</div>
 
 ---
 
-## Contents
+## 🎯 The Problem
 
-- [Why FlagLens](#why-flaglens)
-- [What it does](#what-it-does)
-- [Architecture](#architecture)
+Feature flags make it easier to release features gradually, but configuration drift between Development and Production, unknown feature references in source code, and unsafe flag states can introduce release risk.
+
+**FlagLens adds a governance layer around self-hosted Flagsmith.** It checks configuration and source code before release, evaluates configurable rules, and produces an auditable decision.
+
+## ✨ What FlagLens Does
+
+| Capability | What it helps you do |
+|---|---|
+| 📊 **Live dashboard** | View projects, environments, feature flags, configuration drift and risk findings |
+| 🔍 **AST repository scanner** | Find unknown feature references, unresolved dynamic references and configured flags not found in scanned source |
+| ⚖️ **Release policy engine** | Evaluate configurable rules for risky Production states and missing environment states |
+| 🧾 **Audit reports** | Generate JSON and Markdown reports with findings, decisions and remediation guidance |
+| 🚦 **GitHub Actions guard** | Pass clean checks or block a release that violates configured rules, while retaining audit artifacts |
+
+## 🎬 Project Demonstration
+
+Watch the recorded FlagLens walkthrough:
+
+**[▶ Open the FlagLens demonstration video on Google Drive](https://drive.google.com/drive/folders/19VFOMrZedl9KKA92fgEc3p0RfpYJIaN0?usp=sharing)**
+
+> If the video does not open, check that the Drive folder and video are shared with **Anyone with the link — Viewer** access.
+
+## 🖥️ Dashboard Preview
+
+The screenshot below is a captured view of the FlagLens dashboard connected to a self-hosted Flagsmith project. Live values will depend on the connected Flagsmith instance.
+
+![FlagLens dashboard preview](docs/screenshots/dashboard.png)
+
+## 🧭 How It Works
+
+1. **Connect** FlagLens to a self-hosted Flagsmith project.
+2. **Compare** Development and Production feature states.
+3. **Scan** supported JavaScript and TypeScript source files for feature-flag references.
+4. **Evaluate** findings against the configured release policy.
+5. **Generate** JSON and Markdown audit reports.
+6. **Enforce** the decision in GitHub Actions: approve passing checks or block a release that violates policy.
+
+> **Important:** FlagLens is a governance and review tool. It does not automatically promote, toggle or delete Production feature flags.
+
+## 🧪 Release Guard: Two Demonstration Scenarios
+
+| Scenario | Expected result | Why |
+|---|---|---|
+| ✅ Clean application | **Pass** | No blocking unknown feature references are found under the configured checks |
+| ⛔ Negative application | **Blocked** | The fixture contains an unknown feature reference, so strict release enforcement rejects it |
+
+A blocked negative run may appear as **Failed** in GitHub Actions. That is the expected result when the guard correctly rejects the release. The audit report should still be uploaded for review.
+
+## 🧰 Technology Stack
+
+- **Frontend:** React, TypeScript, Vite
+- **Backend:** Node.js, Express
+- **Repository analysis:** TypeScript Compiler API (AST)
+- **Feature management:** Self-hosted Flagsmith Management API
+- **Automation:** GitHub Actions and a reusable composite action
+- **Reports and policy:** JSON, Markdown and configurable JSON policy
+
+## 🖼️ Architecture at a Glance
+
+See [the full architecture and data-flow documentation](docs/architecture.md).
+
+```mermaid
+flowchart LR
+    DEV[Developer / Reviewer] --> UI[React Dashboard]
+    DEV --> CLI[FlagLens CLI]
+    GH[GitHub Actions] --> ACT[Composite Release Guard]
+    ACT --> CLI
+    UI --> API[Express Backend]
+    API --> FS[Self-hosted Flagsmith]
+    CLI --> FS
+    CLI --> AST[AST Repository Scanner]
+    CLI --> POLICY[Risk + Policy Engine]
+    AST --> REPORT[JSON + Markdown Reports]
+    POLICY --> REPORT
+    REPORT --> ART[CI Artifacts]
+```
+
+---
+
+## 📚 Documentation & Setup
+
 - [Prerequisites](#prerequisites)
 - [1. Configure Flagsmith](#1-configure-flagsmith)
 - [2. Install and configure FlagLens](#2-install-and-configure-flaglens)
@@ -289,7 +368,7 @@ npm start -- report --format both --scan-path ../examples/clean-app --strict --o
 | `--strict` | Block when unknown statically resolved feature references are found |
 | `--output-dir <directory>` | Write reports to the selected directory |
 
-The report contains project and environment context, risk analysis, scanner results, policy evaluation, release status and recommendations. When a release is blocked, the report files are written **before** the CLI returns exit code `1), so CI can still upload the evidence.
+The report contains project and environment context, risk analysis, scanner results, policy evaluation, release status and recommendations. When a release is blocked, the report files are written **before** the CLI returns exit code `1`, so CI can still upload the evidence.
 
 Without `--scan-path`, the report marks repository scanning as not requested and the overall report as incomplete. A blocked report returns a non-zero exit code. A passing report means only that the configured checks passed; it is not a guarantee that a deployment is safe.
 
@@ -332,7 +411,7 @@ FlagLens includes:
 
 ### Configure the runner and secrets
 
-The included workflow is configured for a **Windows x64 self-hosted runner** with labels `self-hosted`, `windows` and `x64`. The runner must be able to reach the Flagsmith instance at the configured URL. The checked-in workflow currently uses `http://127.0.0.1:8000), which assumes Flagsmith is running on the runner host and listening on port 8000.
+The included workflow is configured for a **Windows x64 self-hosted runner** with labels `self-hosted`, `windows` and `x64`. The runner must be able to reach the Flagsmith instance at the configured URL. The checked-in workflow currently uses `http://127.0.0.1:8000`, which assumes Flagsmith is running on the runner host and listening on port 8000.
 
 In **Repository → Settings → Secrets and variables → Actions**, add:
 
