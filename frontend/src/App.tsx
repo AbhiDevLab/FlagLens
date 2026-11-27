@@ -70,19 +70,6 @@ function getState(environment: Environment | undefined, featureId: number) {
   );
 }
 
-function StateBadge({ enabled }: { enabled: boolean | null }) {
-  if (enabled === null) {
-    return <span className="state-badge unknown">Not connected</span>;
-  }
-
-  return (
-    <span className={`state-badge ${enabled ? "enabled" : "disabled"}`}>
-      <span className="state-dot" />
-      {enabled ? "Enabled" : "Disabled"}
-    </span>
-  );
-}
-
 function App() {
   const [data, setData] = useState<Overview | null>(null);
   const [loading, setLoading] = useState(true);
